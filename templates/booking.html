@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Booking - Marquise's Services{% endblock %}
+
+{% block header %}Book a Service{% endblock %}
+
+{% block content %}
+<section class="my-5">
+    <h2 class="text-center">Book a Service</h2>
+    <form method="POST" action="{{ url_for('booking') }}">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="service">Service:</label>
+            <select id="service" name="service" class="form-control">
+                <option value="moving">Moving</option>
+                <option value="cleaning">Cleaning</option>
+                <option value="handyman">Handyman</option>
+                <option value="furniture_assembly">Furniture Assembly</option>
+                <option value="mounting">Mounting</option>
+                <option value="packing">Packing</option>
+                <option value="delivery">Delivery</option>
+                <option value="personal_assistant">Personal Assistant</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Book Now</button>
+    </form>
+</section>
+{% endblock %}

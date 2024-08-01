@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Services - Marquise's Services{% endblock %}
+
+{% block header %}Our Services{% endblock %}
+
+{% block content %}
+<section class="my-5">
+    <h2 class="text-center">Our Services</h2>
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/moving.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Moving Services">
+            <h3>Moving Services</h3>
+            <p>Efficient and reliable moving services to help you relocate with ease.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/cleaning.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Cleaning Services">
+            <h3>Cleaning Services</h3>
+            <p>Professional cleaning services to keep your home or office spotless.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/handyman.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Handyman Services">
+            <h3>Handyman Services</h3>
+            <p>From minor repairs to major projects, our handyman services cover it all.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/furniture_assembly.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Furniture Assembly">
+            <h3>Furniture Assembly</h3>
+            <p>Quick and efficient furniture assembly services for your home or office.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/mounting.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Mounting Services">
+            <h3>Mounting Services</h3>
+            <p>Expert mounting services for TVs, shelves, and other items.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/packing.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Packing Services">
+            <h3>Packing Services</h3>
+            <p>Professional packing services to ensure your belongings are safe and secure.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/delivery.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Delivery Services">
+            <h3>Delivery Services</h3>
+            <p>Reliable delivery services for your items and packages.</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <img src="{{ url_for('static', filename='images/personal_assistant.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Personal Assistant">
+            <h3>Personal Assistant</h3>
+            <p>Get help with your errands and tasks with our personal assistant services.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,107 @@
+/* Sidebar Styles */
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+}
+
+.sidebar a {
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 20px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar a:hover {
+    color: #f1f1f1;
+}
+
+.sidebar .closebtn {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+/* Main content adjustments */
+.main-content {
+    transition: margin-left .5s;
+    padding: 16px;
+}
+
+.hamburger {
+    font-size: 30px;
+    cursor: pointer;
+    margin: 10px;
+    display: inline-block;
+}
+
+.hamburger:hover {
+    color: #111;
+}
+
+#ai-chatbot-highlight {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+#quick-links .btn-outline-primary {
+    margin-bottom: 15px;
+}
+
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+.card img {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.card-body {
+    background-color: #f8f9fa;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.card-title {
+    font-weight: bold;
+}
+
+blockquote {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 5px solid #007bff;
+}
+
+blockquote footer {
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* Responsive adjustments */
+@media screen and (max-height: 450px) {
+  .sidebar {padding-top: 15px;}
+  .sidebar a {font-size: 18px;}
+}
+
+@media screen and (max-width: 768px) {
+    .card {
+        margin-bottom: 20px;
+    }
+}

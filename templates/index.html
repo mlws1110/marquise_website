@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Marquise's Services{% endblock %}
+
+{% block header %}Welcome to Marquise's Services{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- AI Chat Section at the top -->
+    <section id="ai-chatbot-highlight" class="text-center py-5 bg-light">
+        <h3>Chat with Our AI Assistant</h3>
+        <p>Our AI Assistant is here to help you with any questions or service inquiries. Click below to start chatting.</p>
+        <a href="{{ url_for('chat_page') }}" class="btn btn-primary btn-lg">Start Chat</a>
+    </section>
+
+    <!-- Navigation Links Section -->
+    <section id="quick-links" class="text-center my-5">
+        <h3>Explore Our Services</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <a href="{{ url_for('services') }}" class="btn btn-outline-primary w-100 my-2">Services</a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('about') }}" class="btn btn-outline-primary w-100 my-2">About Us</a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('booking') }}" class="btn btn-outline-primary w-100 my-2">Book a Service</a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('testimonials') }}" class="btn btn-outline-primary w-100 my-2">Testimonials</a>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ url_for('contact') }}" class="btn btn-outline-primary w-100 my-2">Contact Us</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Highlight Section -->
+    <section id="services-highlight" class="my-5">
+        <h3 class="text-center">Our Popular Services</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <img src="{{ url_for('static', filename='images/moving_service.jpg') }}" class="card-img-top" alt="Moving Service">
+                    <div class="card-body">
+                        <h5 class="card-title">Moving Services</h5>
+                        <p class="card-text">Professional and reliable moving services for all your relocation needs.</p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <img src="{{ url_for('static', filename='images/cleaning_service.jpg') }}" class="card-img-top" alt="Cleaning Service">
+                    <div class="card-body">
+                        <h5 class="card-title">Cleaning Services</h5>
+                        <p class="card-text">Expert cleaning services to keep your home or office spotless.</p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4 shadow-sm">
+                    <img src="{{ url_for('static', filename='images/handyman_service.jpg') }}" class="card-img-top" alt="Handyman Service">
+                    <div class="card-body">
+                        <h5 class="card-title">Handyman Services</h5>
+                        <p class="card-text">Versatile handyman services for all those little jobs around the house.</p>
+                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="my-5">
+        <h3 class="text-center">What Our Clients Say</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <blockquote class="blockquote text-center">
+                    <p class="mb-0">"The moving team was professional and efficient. Highly recommended!"</p>
+                    <footer class="blockquote-footer">John Doe</footer>
+                </blockquote>
+            </div>
+            <div class="col-md-4">
+                <blockquote class="blockquote text-center">
+                    <p class="mb-0">"Excellent cleaning service. My house has never been cleaner!"</p>
+                    <footer class="blockquote-footer">Jane Smith</footer>
+                </blockquote>
+            </div>
+            <div class="col-md-4">
+                <blockquote class="blockquote text-center">
+                    <p class="mb-0">"Great handyman services. Fixed everything on my list."</p>
+                    <footer class="blockquote-footer">Mike Johnson</footer>
+                </blockquote>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
