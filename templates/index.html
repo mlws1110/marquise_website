@@ -1,100 +1,132 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Marquise's Services{% endblock %}
-
-{% block header %}Welcome to Marquise's Services{% endblock %}
+{% block title %}Marquise's Services - Professional Home Services{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <!-- AI Chat Section at the top -->
-    <section id="ai-chatbot-highlight" class="text-center py-5 bg-light">
-        <h3>Chat with Our AI Assistant</h3>
-        <p>Our AI Assistant is here to help you with any questions or service inquiries. Click below to start chatting.</p>
-        <a href="{{ url_for('chat_page') }}" class="btn btn-primary btn-lg">Start Chat</a>
-    </section>
-
-    <!-- Navigation Links Section -->
-    <section id="quick-links" class="text-center my-5">
-        <h3>Explore Our Services</h3>
-        <div class="row">
-            <div class="col-md-4">
-                <a href="{{ url_for('services') }}" class="btn btn-outline-primary w-100 my-2">Services</a>
+<div class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1 class="display-4 fw-bold">Transform Your Space with Marquise's Services</h1>
+                <p class="lead">Expert moving, cleaning, and handyman solutions tailored to your needs.</p>
+                <a href="{{ url_for('booking') }}" class="btn btn-light btn-lg mt-3">Book Now</a>
             </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('about') }}" class="btn btn-outline-primary w-100 my-2">About Us</a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('booking') }}" class="btn btn-outline-primary w-100 my-2">Book a Service</a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('testimonials') }}" class="btn btn-outline-primary w-100 my-2">Testimonials</a>
-            </div>
-            <div class="col-md-4">
-                <a href="{{ url_for('contact') }}" class="btn btn-outline-primary w-100 my-2">Contact Us</a>
+            <div class="col-md-6">
+                <img src="{{ url_for('static', filename='images/hero-collage.jpg') }}" alt="Marquise's Services Collage" class="img-fluid rounded shadow">
             </div>
         </div>
-    </section>
-
-    <!-- Services Highlight Section -->
-    <section id="services-highlight" class="my-5">
-        <h3 class="text-center">Our Popular Services</h3>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
-                    <img src="{{ url_for('static', filename='images/moving_service.jpg') }}" class="card-img-top" alt="Moving Service">
-                    <div class="card-body">
-                        <h5 class="card-title">Moving Services</h5>
-                        <p class="card-text">Professional and reliable moving services for all your relocation needs.</p>
-                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
-                    <img src="{{ url_for('static', filename='images/cleaning_service.jpg') }}" class="card-img-top" alt="Cleaning Service">
-                    <div class="card-body">
-                        <h5 class="card-title">Cleaning Services</h5>
-                        <p class="card-text">Expert cleaning services to keep your home or office spotless.</p>
-                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card mb-4 shadow-sm">
-                    <img src="{{ url_for('static', filename='images/handyman_service.jpg') }}" class="card-img-top" alt="Handyman Service">
-                    <div class="card-body">
-                        <h5 class="card-title">Handyman Services</h5>
-                        <p class="card-text">Versatile handyman services for all those little jobs around the house.</p>
-                        <a href="{{ url_for('services') }}" class="btn btn-primary">Learn More</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Testimonials Section -->
-    <section id="testimonials" class="my-5">
-        <h3 class="text-center">What Our Clients Say</h3>
-        <div class="row">
-            <div class="col-md-4">
-                <blockquote class="blockquote text-center">
-                    <p class="mb-0">"The moving team was professional and efficient. Highly recommended!"</p>
-                    <footer class="blockquote-footer">John Doe</footer>
-                </blockquote>
-            </div>
-            <div class="col-md-4">
-                <blockquote class="blockquote text-center">
-                    <p class="mb-0">"Excellent cleaning service. My house has never been cleaner!"</p>
-                    <footer class="blockquote-footer">Jane Smith</footer>
-                </blockquote>
-            </div>
-            <div class="col-md-4">
-                <blockquote class="blockquote text-center">
-                    <p class="mb-0">"Great handyman services. Fixed everything on my list."</p>
-                    <footer class="blockquote-footer">Mike Johnson</footer>
-                </blockquote>
-            </div>
-        </div>
-    </section>
+    </div>
 </div>
+
+<section class="services py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Our Premium Services</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-zoom">
+                    <img src="{{ url_for('static', filename='images/moving-service.jpg') }}" class="card-img-top" alt="Moving Services">
+                    <div class="card-body">
+                        <h3 class="card-title">Moving Services</h3>
+                        <p class="card-text">Stress-free relocations with our expert team. We handle everything from packing to safe transportation.</p>
+                        <a href="{{ url_for('services') }}#moving" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-zoom">
+                    <img src="{{ url_for('static', filename='images/cleaning-service.jpg') }}" class="card-img-top" alt="Cleaning Services">
+                    <div class="card-body">
+                        <h3 class="card-title">Cleaning Services</h3>
+                        <p class="card-text">Transform your space with our thorough, eco-friendly cleaning solutions for homes and offices.</p>
+                        <a href="{{ url_for('services') }}#cleaning" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-zoom">
+                    <img src="{{ url_for('static', filename='images/handyman-service.jpg') }}" class="card-img-top" alt="Handyman Services">
+                    <div class="card-body">
+                        <h3 class="card-title">Handyman Services</h3>
+                        <p class="card-text">From minor repairs to major improvements, our skilled team has you covered for all your home needs.</p>
+                        <a href="{{ url_for('services') }}#handyman" class="btn btn-outline-primary">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- New section for job examples -->
+<section class="job-examples py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Examples of Our Work</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <img src="{{ url_for('static', filename='images/job1.jpg') }}" alt="Job Example 1" class="img-fluid rounded shadow-sm">
+            </div>
+            <div class="col-md-4 mb-4">
+                <img src="{{ url_for('static', filename='images/job2.jpg') }}" alt="Job Example 2" class="img-fluid rounded shadow-sm">
+            </div>
+            <div class="col-md-4 mb-4">
+                <img src="{{ url_for('static', filename='images/job3.jpg') }}" alt="Job Example 3" class="img-fluid rounded shadow-sm">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">What Our Clients Say</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text">"Marquise's team made our move so easy. Professional, efficient, and careful with our belongings. Highly recommended!"</p>
+                        <footer class="blockquote-footer">Sarah J., Happy Customer</footer>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text">"The cleaning service was exceptional. Our office has never looked better. We're now regular clients!"</p>
+                        <footer class="blockquote-footer">Mark T., Business Owner</footer>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <p class="card-text">"From painting to plumbing, the handyman services were top-notch. Skilled professionals who get the job done right."</p>
+                        <footer class="blockquote-footer">Emily R., Homeowner</footer>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta bg-primary text-white py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to experience our top-notch services?</h2>
+        <a href="{{ url_for('booking') }}" class="btn btn-light btn-lg">Book Your Service Now</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .hover-zoom {
+        transition: transform .2s;
+    }
+    .hover-zoom:hover {
+        transform: scale(1.05);
+    }
+</style>
 {% endblock %}

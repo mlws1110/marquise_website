@@ -1,53 +1,133 @@
 {% extends "base.html" %}
 
-{% block title %}Services - Marquise's Services{% endblock %}
-
-{% block header %}Our Services{% endblock %}
+{% block title %}Our Services - Marquise's Services{% endblock %}
 
 {% block content %}
-<section class="my-5">
-    <h2 class="text-center">Our Services</h2>
-    <div class="row">
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/moving.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Moving Services">
-            <h3>Moving Services</h3>
-            <p>Efficient and reliable moving services to help you relocate with ease.</p>
+<div class="container py-5">
+    <h1 class="text-center mb-5">Our Professional Services</h1>
+    
+    <div id="moving" class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/moving-detail.jpg') }}" alt="Moving Services" class="img-fluid rounded shadow-lg">
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/cleaning.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Cleaning Services">
-            <h3>Cleaning Services</h3>
-            <p>Professional cleaning services to keep your home or office spotless.</p>
+        <div class="col-md-6">
+            <h2 class="mb-4">Moving Services</h2>
+            <p class="lead">Experience stress-free relocations with Marquise's expert moving team.</p>
+            <p>Our comprehensive moving services include:</p>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Careful packing and unpacking of your belongings</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Safe transportation with modern, well-maintained vehicles</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Furniture disassembly and reassembly</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Specialized handling for delicate items</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Efficient local and long-distance moves</li>
+            </ul>
+            <h3>Pricing Tiers</h3>
+            <ul class="list-group mb-4">
+                <li class="list-group-item">Basic Move: Starting at $X/hour</li>
+                <li class="list-group-item">Full-Service Move: Starting at $Y/hour</li>
+                <li class="list-group-item">Long-Distance Move: Custom quote</li>
+            </ul>
+            <a href="{{ url_for('booking') }}" class="btn btn-primary">Book Moving Service</a>
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/handyman.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Handyman Services">
-            <h3>Handyman Services</h3>
-            <p>From minor repairs to major projects, our handyman services cover it all.</p>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job4.jpg') }}" alt="Moving Job Example 1" class="img-fluid rounded shadow-sm">
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/furniture_assembly.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Furniture Assembly">
-            <h3>Furniture Assembly</h3>
-            <p>Quick and efficient furniture assembly services for your home or office.</p>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job5.jpg') }}" alt="Moving Job Example 2" class="img-fluid rounded shadow-sm">
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/mounting.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Mounting Services">
-            <h3>Mounting Services</h3>
-            <p>Expert mounting services for TVs, shelves, and other items.</p>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job6.jpg') }}" alt="Moving Job Example 3" class="img-fluid rounded shadow-sm">
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/packing.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Packing Services">
-            <h3>Packing Services</h3>
-            <p>Professional packing services to ensure your belongings are safe and secure.</p>
+    </div>
+
+    <div id="cleaning" class="row mb-5 align-items-center">
+        <div class="col-md-6 order-md-2">
+            <img src="{{ url_for('static', filename='images/cleaning-detail.jpg') }}" alt="Cleaning Services" class="img-fluid rounded shadow-lg">
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/delivery.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Delivery Services">
-            <h3>Delivery Services</h3>
-            <p>Reliable delivery services for your items and packages.</p>
+        <div class="col-md-6 order-md-1">
+            <h2 class="mb-4">Cleaning Services</h2>
+            <p class="lead">Transform your space with our professional, eco-friendly cleaning solutions.</p>
+            <p>Our top-notch cleaning services cover:</p>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Deep cleaning for homes and offices</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Regular maintenance cleaning</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Post-construction and renovation cleanup</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Carpet and upholstery cleaning</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Window and exterior cleaning</li>
+            </ul>
+            <a href="{{ url_for('booking') }}" class="btn btn-primary">Book Cleaning Service</a>
         </div>
-        <div class="col-md-4 text-center">
-            <img src="{{ url_for('static', filename='images/personal_assistant.jpg') }}" class="img-fluid rounded-circle mb-3" alt="Personal Assistant">
-            <h3>Personal Assistant</h3>
-            <p>Get help with your errands and tasks with our personal assistant services.</p>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job7.jpg') }}" alt="Cleaning Job Example 1" class="img-fluid rounded shadow-sm">
         </div>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job8.jpg') }}" alt="Cleaning Job Example 2" class="img-fluid rounded shadow-sm">
+        </div>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job9.jpg') }}" alt="Cleaning Job Example 3" class="img-fluid rounded shadow-sm">
+        </div>
+    </div>
+
+    <div id="handyman" class="row mb-5 align-items-center">
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/handyman-detail.jpg') }}" alt="Handyman Services" class="img-fluid rounded shadow-lg">
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-4">Handyman Services</h2>
+            <p class="lead">From minor repairs to major improvements, our skilled handymen have you covered.</p>
+            <p>Our comprehensive handyman services include:</p>
+            <ul class="list-group list-group-flush mb-4">
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Plumbing and electrical repairs</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Painting and drywall repair</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Furniture assembly and installation</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Home maintenance and improvements</li>
+                <li class="list-group-item"><i class="fas fa-check text-success me-2"></i>Deck and fence repairs</li>
+            </ul>
+            <a href="{{ url_for('booking') }}" class="btn btn-primary">Book Handyman Service</a>
+        </div>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job10.jpg') }}" alt="Handyman Job Example 1" class="img-fluid rounded shadow-sm">
+        </div>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job11.jpg') }}" alt="Handyman Job Example 2" class="img-fluid rounded shadow-sm">
+        </div>
+        <div class="col-md-4">
+            <img src="{{ url_for('static', filename='images/job12.jpg') }}" alt="Handyman Job Example 3" class="img-fluid rounded shadow-sm">
+        </div>
+    </div>
+</div>
+
+<section class="cta bg-primary text-white py-5 mt-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to transform your space?</h2>
+        <p class="lead mb-4">Experience the Marquise's difference today!</p>
+        <a href="{{ url_for('booking') }}" class="btn btn-light btn-lg">Book Your Service Now</a>
     </div>
 </section>
 {% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .list-group-item {
+        border: none;
+        padding: 0.5rem 0;
+    }
+    .img-fluid {
+        transition: transform .3s ease-in-out;
+    }
+    .img-fluid:hover {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+

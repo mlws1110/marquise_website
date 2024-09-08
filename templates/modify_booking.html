@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Modify Booking - Marquise's Services{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">Modify Booking</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" action="{{ url_for('modify_booking', token=token) }}">
+                <div class="mb-3">
+                    <label for="service" class="form-label">Service</label>
+                    <select class="form-select" id="service" name="service" required>
+                        <option value="" selected disabled>Choose a service</option>
+                        {% for service in services %}
+                            <option value="{{ service.name }}" {% if booking.service == service.name %}selected{% endif %}>{{ service.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ booking.date }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="time" class="form-label">Time</label>
+                    <input type="time" class="form-control" id="time" name="time" value="{{ booking.time }}" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Booking</button>
+                <a href="{{ url_for('cancel_booking', token=token) }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel Booking</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

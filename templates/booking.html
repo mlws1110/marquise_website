@@ -2,38 +2,157 @@
 
 {% block title %}Booking - Marquise's Services{% endblock %}
 
-{% block header %}Book a Service{% endblock %}
-
 {% block content %}
-<section class="my-5">
-    <h2 class="text-center">Book a Service</h2>
-    <form method="POST" action="{{ url_for('booking') }}">
-        <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" class="form-control" required>
+<div class="container">
+    <h2 class="text-center mb-4">Book a Service</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div id="calendar"></div>
         </div>
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" class="form-control" required>
+        <div class="col-md-6">
+            <form id="booking-form" method="POST" action="{{ url_for('booking') }}">
+                <div class="mb-3">
+                    <label>Select Services:</label>
+                    {% for service in services %}
+                    <div class="form-check">
+                        <input class="form-check-input service-checkbox" type="checkbox" name="services" value="{{ service.id }}" id="service{{ service.id }}">
+                        <label class="form-check-label" for="service{{ service.id }}">
+                            {{ service.name }} - ${{ service.price_per_hour }}/hour
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ user_email }}" required>
+                    <small class="form-text text-muted">
+                        {% if current_user.is_authenticated %}
+                            You can change this email if you want the confirmation sent elsewhere.
+                        {% else %}
+                            Enter your email for booking confirmation.
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+                <div class="mb-3">
+                    <label for="custom-time" class="form-label">Time</label>
+                    <input type="time" class="form-control" id="custom-time" name="custom-time" required>
+                </div>
+                <div class="mb-3">
+                    <label for="duration">Duration (hours):</label>
+                    <input type="number" class="form-control" id="duration" name="duration" min="1" value="1">
+                </div>
+                <div class="mb-3">
+                    <strong>Estimated Total: $<span id="estimated-total">0</span></strong>
+                </div>
+                <div id="availability-message"></div>
+                <button type="submit" class="btn btn-primary" id="book-now-btn">Book Now</button>
+            </form>
         </div>
-        <div class="form-group">
-            <label for="service">Service:</label>
-            <select id="service" name="service" class="form-control">
-                <option value="moving">Moving</option>
-                <option value="cleaning">Cleaning</option>
-                <option value="handyman">Handyman</option>
-                <option value="furniture_assembly">Furniture Assembly</option>
-                <option value="mounting">Mounting</option>
-                <option value="packing">Packing</option>
-                <option value="delivery">Delivery</option>
-                <option value="personal_assistant">Personal Assistant</option>
-            </select>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmationModalLabel">Confirm Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Please confirm your booking details:</p>
+                <ul>
+                    <li><strong>Services:</strong> <span id="confirm-services"></span></li>
+                    <li><strong>Email:</strong> <span id="confirm-email"></span></li>
+                    <li><strong>Date:</strong> <span id="confirm-date"></span></li>
+                    <li><strong>Time:</strong> <span id="confirm-time"></span></li>
+                    <li><strong>Duration:</strong> <span id="confirm-duration"></span> hours</li>
+                    <li><strong>Estimated Total:</strong> $<span id="confirm-total"></span></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-booking">Confirm Booking</button>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="date">Date:</label>
-            <input type="date" id="date" name="date" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Book Now</button>
-    </form>
-</section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    $('#booking-form').submit(function(e) {
+        e.preventDefault();
+        if (this.checkValidity()) {
+            var services = [];
+            $('.service-checkbox:checked').each(function() {
+                services.push($(this).siblings('label').text().split(' - ')[0]);
+            });
+            $('#confirm-services').text(services.join(', '));
+            $('#confirm-email').text($('#email').val());
+            $('#confirm-date').text($('#date').val());
+            $('#confirm-time').text($('#custom-time').val());
+            $('#confirm-duration').text($('#duration').val());
+            $('#confirm-total').text($('#estimated-total').text());
+            $('#confirmationModal').modal('show');
+        } else {
+            this.reportValidity();
+        }
+    });
+
+    $('#confirm-booking').click(function() {
+        $('#booking-form')[0].submit();
+    });
+
+    function updateTotal() {
+        var total = 0;
+        $('.service-checkbox:checked').each(function() {
+            var price = parseFloat($(this).siblings('label').text().split('$')[1]);
+            total += price;
+        });
+        var duration = $('#duration').val();
+        total *= duration;
+        $('#estimated-total').text(total.toFixed(2));
+    }
+
+    $('.service-checkbox, #duration').change(updateTotal);
+
+    function checkAvailability() {
+        var services = [];
+        $('.service-checkbox:checked').each(function() {
+            services.push($(this).val());
+        });
+        var date = $('#date').val();
+        var time = $('#custom-time').val();
+
+        if (services.length > 0 && date && time) {
+            $.post('/check_availability', {
+                services: services,
+                date: date,
+                time: time
+            }, function(data) {
+                if (data.available) {
+                    $('#availability-message').html('<div class="alert alert-success">This time slot is available!</div>');
+                    $('#book-now-btn').prop('disabled', false);
+                } else {
+                    $('#availability-message').html('<div class="alert alert-danger">Sorry, this time slot is not available. Please choose another.</div>');
+                    $('#book-now-btn').prop('disabled', true);
+                }
+            });
+        } else {
+            $('#availability-message').empty();
+            $('#book-now-btn').prop('disabled', false);
+        }
+    }
+
+    // Check availability when service, date, or time changes
+    $('.service-checkbox, #date, #custom-time').change(checkAvailability);
+});
+</script>
 {% endblock %}

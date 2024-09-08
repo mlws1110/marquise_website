@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Marquise's Services{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-5">Welcome, {{ current_user.name }}!</h1>
+    
+    <h2 class="mb-4">Your Bookings</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td>{{ booking.service }}</td>
+                <td>{{ booking.date }}</td>
+                <td>{{ booking.time }}</td>
+                <td>{{ booking.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2 class="mb-4 mt-5">Your Referrals</h2>
+    <p>Your referral code: {{ current_user.referral_code }}</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Referred Email</th>
+                <th>Date Referred</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for referral in referrals %}
+            <tr>
+                <td>{{ referral.referred_email }}</td>
+                <td>{{ referral.date_referred }}</td>
+                <td>{{ referral.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('refer') }}" class="btn btn-primary mt-4">Refer a Friend</a>
+</div>
+{% endblock %}

@@ -1,176 +1,305 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_mail import Mail, Message
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, render_template_string
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+from extensions import db, login_manager, mail
+from flask_mail import Message
+from models import User, Service, Booking, Contact, Referral
+import random
+import string
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-app = Flask(__name__)
+def create_app():
+    app = Flask(__name__)
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///new_bookings.db')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Secret key for session management
-app.secret_key = os.getenv('SECRET_KEY', 'default_secret_key')
+    # Email configuration
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@marquisesservices.com')
 
-# Configure OpenAI API key using environment variable
-openai_api_key = os.getenv('OPENAI_API_KEY')
-client = OpenAI(api_key=openai_api_key)
+    db.init_app(app)
+    login_manager.init_app(app)
+    mail.init_app(app)
 
-# Configure Flask-Mail
-app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
-app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == 'True'
+    login_manager.login_view = 'login'
 
-mail = Mail(app)
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
-# Configure SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookings.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
-# Define the Booking model
-class Booking(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    service = db.Column(db.String(100))
-    date = db.Column(db.String(100))
+    @app.route('/services')
+    def services():
+        return render_template('services.html')
 
-# Create the database tables
-with app.app_context():
-    db.create_all()
+    @app.route('/about')
+    def about():
+        return render_template('about.html')
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    @app.route('/testimonials')
+    def testimonials():
+        return render_template('testimonials.html')
 
-@app.route('/services')
-def services():
-    return render_template('services.html')
+    @app.route('/contact', methods=['GET', 'POST'])
+    def contact():
+        if request.method == 'POST':
+            name = request.form['name']
+            email = request.form['email']
+            message = request.form['message']
+            new_contact = Contact(name=name, email=email, message=message)
+            db.session.add(new_contact)
+            db.session.commit()
+            flash('Your message has been sent!', 'success')
+            return redirect(url_for('contact'))
+        return render_template('contact.html')
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        if request.method == 'POST':
+            email = request.form.get('email')
+            password = request.form.get('password')
+            remember = True if request.form.get('remember') else False
+            
+            user = User.query.filter_by(email=email).first()
+            
+            if user and check_password_hash(user.password, password):
+                login_user(user, remember=remember)
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('index'))
+            else:
+                flash('Please check your login details and try again.', 'danger')
+        
+        return render_template('login.html')
 
-@app.route('/booking', methods=['GET', 'POST'])
-def booking():
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
+    @app.route('/register', methods=['GET', 'POST'])
+    def register():
+        if current_user.is_authenticated:
+            return redirect(url_for('index'))
+        
+        if request.method == 'POST':
+            username = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
+            confirm_password = request.form['confirm_password']
+
+            if password != confirm_password:
+                flash('Passwords do not match', 'danger')
+                return redirect(url_for('register'))
+
+            existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+            if existing_user:
+                flash('Username or email already exists', 'danger')
+                return redirect(url_for('register'))
+
+            new_user = User(username=username, email=email)
+            new_user.password = generate_password_hash(password)
+            db.session.add(new_user)
+            db.session.commit()
+
+            flash('Registration successful. Please log in.', 'success')
+            return redirect(url_for('login'))
+
+        return render_template('register.html')
+
+    @app.route('/logout')
+    @login_required
+    def logout():
+        logout_user()
+        return redirect(url_for('index'))
+
+    @app.route('/profile')
+    @login_required
+    def profile():
+        bookings = Booking.query.filter_by(user_id=current_user.id).all()
+        return render_template('profile.html', bookings=bookings)
+
+    @app.route('/booking', methods=['GET', 'POST'])
+    def booking():
+        services = Service.query.all()
+        if request.method == 'POST':
+            service_ids = request.form.getlist('services')
+            email = request.form['email']
+            date = request.form['date']
+            time = request.form['custom-time']
+            duration = request.form['duration']
+            
+            for service_id in service_ids:
+                service = Service.query.get(service_id)
+                new_booking = Booking(service=service.name, email=email, date=date, time=time)
+                # Only set user_id if the user is logged in
+                if current_user.is_authenticated:
+                    new_booking.user_id = current_user.id
+                db.session.add(new_booking)
+            
+            db.session.commit()
+            
+            try:
+                send_confirmation_email(email, [Service.query.get(id).name for id in service_ids], date, time)
+                flash('Booking successful! A confirmation email has been sent.', 'success')
+            except Exception as e:
+                app.logger.error(f"Failed to send email: {str(e)}")
+                flash('Booking successful! Please check your email for confirmation details.', 'success')
+            
+            return redirect(url_for('confirmation'))
+        user_email = current_user.email if current_user.is_authenticated else ''
+        return render_template('booking.html', services=services, user_email=user_email)
+
+    @app.route('/confirmation')
+    def confirmation():
+        return render_template('confirmation.html')
+
+    @app.route('/faq')
+    def faq():
+        faqs = [
+            {
+                'question': 'What areas do you serve?',
+                'answer': 'We currently serve the greater metropolitan area and surrounding suburbs.'
+            },
+            {
+                'question': 'How do I schedule a service?',
+                'answer': 'You can easily schedule a service through our online booking system or by calling our customer service line.'
+            },
+            {
+                'question': 'What is your cancellation policy?',
+                'answer': 'We offer free cancellation up to 24 hours before your scheduled service.'
+            },
+            # Add more FAQs as needed
+        ]
+        return render_template('faq.html', faqs=faqs)
+
+    @app.route('/gallery')
+    def gallery():
+        gallery_images = [
+            {'src': 'images/job1.jpg', 'alt': 'Moving Service Example', 'category': 'Moving'},
+            {'src': 'images/job2.jpg', 'alt': 'Cleaning Service Example', 'category': 'Cleaning'},
+            {'src': 'images/job3.jpg', 'alt': 'Handyman Service Example', 'category': 'Handyman'},
+            # Add more images here
+        ]
+        return render_template('gallery.html', gallery_images=gallery_images)
+
+    @app.route('/dashboard')
+    @login_required
+    def dashboard():
+        user_bookings = Booking.query.filter_by(user_id=current_user.id).all()
+        user_referrals = Referral.query.filter_by(referrer_id=current_user.id).all()
+        return render_template('dashboard.html', bookings=user_bookings, referrals=user_referrals)
+
+    @app.route('/check_availability', methods=['POST'])
+    def check_availability():
         service = request.form['service']
         date = request.form['date']
+        time = request.form['time']
+        # Implement your availability checking logic here
+        # This is a placeholder response
+        available = True
+        return jsonify({'available': available})
 
-        # Simple form validation
-        if not name or not email or not service or not date:
-            flash('All fields are required!', 'danger')
-            return redirect(url_for('booking'))
+    return app
 
-        new_booking = Booking(name=name, email=email, service=service, date=date)
-        db.session.add(new_booking)
-        db.session.commit()
+def send_confirmation_email(email, services, date, time):
+    subject = "Booking Confirmation - Marquise's Services"
+    
+    # HTML email template
+    html_content = render_template_string('''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Booking Confirmation</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
+            .header { background-color: #4A90E2; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; }
+            .footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
+            h1 { margin: 0; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+            .btn { display: inline-block; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 5px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Booking Confirmation</h1>
+            </div>
+            <div class="content">
+                <p>Dear Valued Customer,</p>
+                <p>Thank you for choosing Marquise's Services. We're pleased to confirm your booking with the following details:</p>
+                <table>
+                    <tr>
+                        <th>Service(s)</th>
+                        <td>{{ ', '.join(services) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date</th>
+                        <td>{{ date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Time</th>
+                        <td>{{ time }}</td>
+                    </tr>
+                </table>
+                <p>Our team is committed to providing you with exceptional service. Here's what you can expect:</p>
+                <ul>
+                    <li>A courtesy call 24 hours before your appointment</li>
+                    <li>Punctual arrival of our professional team</li>
+                    <li>High-quality service tailored to your needs</li>
+                </ul>
+                <p>If you need to make any changes to your booking or have any questions, please don't hesitate to contact us:</p>
+                <p>
+                    Phone: (555) 123-4567<br>
+                    Email: support@marquisesservices.com
+                </p>
+            </div>
+            <div class="footer">
+                <p>&copy; 2023 Marquise's Services. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    ''', services=services, date=date, time=time)
+    
+    msg = Message(subject, recipients=[email], html=html_content)
+    mail.send(msg)
 
-        # Send confirmation email
-        msg = Message('Booking Confirmation', sender='noreply@yourdomain.com', recipients=[email])
-        msg.body = f"Dear {name},\n\nYour booking for {service} on {date} has been confirmed.\n\nThank you!"
-        mail.send(msg)
-
-        flash('Booking confirmed! A confirmation email has been sent.', 'success')
-        return redirect(url_for('confirmation'))
-    return render_template('booking.html')
-
-@app.route('/testimonials')
-def testimonials():
-    return render_template('testimonials.html')
-
-@app.route('/contact', methods=['GET', 'POST'])
-def contact():
-    if request.method == 'POST':
-        flash('Your message has been sent!', 'success')
-        return redirect(url_for('thank_you'))
-    return render_template('contact.html')
-
-@app.route('/confirmation')
-def confirmation():
-    return render_template('confirmation.html')
-
-@app.route('/thank_you')
-def thank_you():
-    return render_template('thank_you.html')
-
-@app.route('/chat')
-def chat_page():
-    return render_template('chat.html')
-
-@app.route('/chat', methods=['POST'])
-def chat():
-    user_message = request.json.get('message', '')
-
-    # Define the system prompt with company information and guidelines
-    system_prompt = {
-        "role": "system",
-        "content": (
-            "You are an intelligent assistant for Marquise's Services, a company specializing in moving, cleaning, and handyman jobs. "
-            "Your primary goal is to assist users with their inquiries and guide them through booking services. "
-            "\n\n"
-            "### Company Information\n"
-            "- **Operating Hours**: Monday to Saturday, 8 AM to 6 PM\n"
-            "- **Email**: marquisew@gmail.com\n"
-            "- **Pricing**: Services are priced at $50 per hour, with probes for customized jobs.\n"
-            "- **Types of Jobs**: Moving (including packing and transport), cleaning (residential and commercial), and handyman services (repairs, installations).\n"
-            "\n\n"
-            "### Service Details\n"
-            "1. **Moving Services**:\n"
-            "   - Includes packing, loading, transporting, and unloading.\n"
-            "   - Special handling for fragile items upon request.\n"
-            "\n"
-            "2. **Cleaning Services**:\n"
-            "   - Offers residential and commercial cleaning.\n"
-            "   - Eco-friendly products available on demand.\n"
-            "\n"
-            "3. **Handyman Services**:\n"
-            "   - Provides repairs, installations, and general maintenance.\n"
-            "   - Skilled in plumbing, electrical work, carpentry, and more.\n"
-            "\n\n"
-            "### Tools and Techniques\n"
-            "- Use scheduling software to check availability and book appointments.\n"
-            "- Utilize CRM tools to manage customer interactions and follow-ups.\n"
-            "- Employ task management apps for tracking job progress and completion.\n"
-            "\n\n"
-            "### Interaction Guidelines\n"
-            "- Always greet the user and offer assistance. Example: 'Hello! How can I assist you today with our services?'\n"
-            "- If the user requests a service, ask for details such as date, time, and specific requirements.\n"
-            "- Confirm the booking details and offer to send a confirmation email.\n"
-            "- Encourage users to ask questions if they need more information.\n"
-            "\n\n"
-            "### Probe for Additional Information\n"
-            "If the user seems uncertain or needs guidance, gently ask probing questions such as:\n"
-            "- 'Are there any specific requirements or preferences you have for this job?'\n"
-            "- 'Would you like to know more about our eco-friendly cleaning options?'\n"
-            "- 'Do you need help with packing fragile items for your move?'\n"
-            "\n\n"
-            "### Final Tips\n"
-            "- Ensure that each interaction is clear, concise, and friendly.\n"
-            "- Offer additional services or promotions if relevant.\n"
-            "- Thank the user for considering Marquise's Services.\n"
-        )
-    }
-
-    # Using the OpenAI API client to create a completion
-    response = client.chat.completions.create(
-        model='gpt-4o-mini',
-        messages=[
-            system_prompt,
-            {"role": "user", "content": user_message}
+def create_sample_services():
+    if Service.query.count() == 0:
+        services = [
+            Service(name="Moving", description="Professional moving services", price_per_hour=50.0, duration=4, image="moving.jpg"),
+            Service(name="Cleaning", description="Thorough cleaning services", price_per_hour=30.0, duration=3, image="cleaning.jpg"),
+            Service(name="Handyman", description="Skilled handyman services", price_per_hour=40.0, duration=2, image="handyman.jpg"),
         ]
-    )
+        db.session.add_all(services)
+        db.session.commit()
+        print("Sample services added successfully!")
 
-    # Accessing the response correctly using dot notation
-    bot_message = response.choices[0].message.content.strip()
-    return jsonify({'response': bot_message})
+app = create_app()
+
+@app.context_processor
+def inject_user():
+    return dict(current_user=current_user)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all()
+        create_sample_services()
+    app.run(host='0.0.0.0', port=5000, debug=True)
