@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, render_template_string
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, render_template_string, current_app
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -6,12 +6,36 @@ import os
 from dotenv import load_dotenv
 from extensions import db, login_manager, mail
 from flask_mail import Message
-from models import User, Service, Booking, Contact, Referral
+from models import User, Service, Booking, Contact, Referral, Feedback, LoyaltyPoints
 import random
 import string
+from openai import OpenAI
+from swarm import Agent, Swarm
+import json
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from contextlib import contextmanager
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import timedelta
+from flask_migrate import Migrate
+from tools.custom_tool import check_availability, calculate_estimate, send_confirmation_email
 
-# Load environment variables
-load_dotenv()
+# Get the directory of the current script
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Construct the path to the .env file
+env_path = os.path.join(current_dir, '.env')
+# Load the .env file
+load_dotenv(dotenv_path=env_path)
+
+print("OPENAI_API_KEY:", os.getenv('OPENAI_API_KEY'))
+
+print("Current directory:", current_dir)
+print("Env file path:", env_path)
+print("Env file exists:", os.path.exists(env_path))
+print("Env file contents:")
+with open(env_path, 'r') as f:
+    print(f.read())
 
 def create_app():
     app = Flask(__name__)
@@ -30,6 +54,9 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
+    
+    # Initialize Flask-Migrate
+    migrate = Migrate(app, db)
 
     login_manager.login_view = 'login'
 
@@ -210,76 +237,231 @@ def create_app():
         available = True
         return jsonify({'available': available})
 
-    return app
+    def send_email(to, subject, body):
+        """Send an email using the configured mail server."""
+        sender_email = current_app.config['MAIL_USERNAME']
+        sender_password = current_app.config['MAIL_PASSWORD']
+        mail_server = current_app.config['MAIL_SERVER']
+        mail_port = current_app.config['MAIL_PORT']
 
-def send_confirmation_email(email, services, date, time):
-    subject = "Booking Confirmation - Marquise's Services"
+        print(f"Attempting to send email from {sender_email} to {to}")
+        
+        if not sender_email or not sender_password:
+            return json.dumps({"status": "error", "message": "Email credentials not found in configuration"})
+
+        message = MIMEMultipart()
+        message["From"] = sender_email
+        message["To"] = to
+        message["Subject"] = subject
+        message.attach(MIMEText(body, "plain"))
+
+        try:
+            with smtplib.SMTP(mail_server, mail_port) as server:
+                server.starttls()
+                server.login(sender_email, sender_password)
+                server.send_message(message)
+            return json.dumps({"status": "success", "message": "Email sent successfully!"})
+        except Exception as e:
+            error_message = f"An error occurred: {str(e)}"
+            print(error_message)
+            return json.dumps({"status": "error", "message": error_message})
+
+    # Initialize the scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+
+    def book_service(service, email, date, time):
+        """Book a service and save it to the database."""
+        try:
+            with app.app_context():
+                new_booking = Booking(service=service, email=email, date=date, time=time)
+                db.session.add(new_booking)
+                db.session.commit()
+                
+                # Add loyalty points
+                user = User.query.filter_by(email=email).first()
+                if user:
+                    loyalty_points = LoyaltyPoints.query.filter_by(user_id=user.id).first()
+                    if not loyalty_points:
+                        loyalty_points = LoyaltyPoints(user_id=user.id)
+                    loyalty_points.points += 100  # Add 100 points for each booking
+                    loyalty_points.last_updated = datetime.utcnow()
+                    db.session.add(loyalty_points)
+                    db.session.commit()
+                
+                # Send confirmation email
+                confirmation_result = send_confirmation_email(email, [service], date, time)
+                
+                return f"Service '{service}' booked for {date} at {time}. {confirmation_result}"
+        except Exception as e:
+            with app.app_context():
+                db.session.rollback()
+            return f"Error booking service: {str(e)}"
+
+    def send_confirmation_email(email, services, date, time):
+        try:
+            subject = "Your Booking Confirmation - Marquise's Services"
+            
+            # Personalized HTML email template
+            html_content = render_template('email_templates/booking_confirmation.html', 
+                                           services=services, date=date, time=time)
+            
+            msg = Message(subject, recipients=[email], html=html_content)
+            mail.send(msg)
+            
+            # Schedule follow-up emails
+            schedule_follow_up_emails(email, services, date, time)
+            
+            return f"Confirmation email sent to {email} for services on {date} at {time}."
+        except Exception as e:
+            print(f"Failed to send email: {str(e)}")  # Log the error
+            return "Booking confirmed. You'll receive a confirmation email shortly."
+
+    def schedule_follow_up_emails(email, services, date, time):
+        # Schedule reminder email 1 day before the service
+        reminder_date = datetime.strptime(date, "%Y-%m-%d") - timedelta(days=1)
+        scheduler.add_job(send_reminder_email, 'date', run_date=reminder_date, args=[email, services, date, time])
+        
+        # Schedule feedback request email 1 day after the service
+        feedback_date = datetime.strptime(date, "%Y-%m-%d") + timedelta(days=1)
+        scheduler.add_job(send_feedback_request, 'date', run_date=feedback_date, args=[email, services])
+
+    def send_reminder_email(email, services, date, time):
+        subject = "Your Marquise's Services Appointment Tomorrow"
+        html_content = render_template('email_templates/reminder_email.html', 
+                                       services=services, date=date, time=time)
+        msg = Message(subject, recipients=[email], html=html_content)
+        mail.send(msg)
+
+    def send_feedback_request(email, services):
+        subject = "How was your Marquise's Services experience?"
+        feedback_url = url_for('feedback', _external=True)
+        html_content = render_template('email_templates/feedback_request.html', 
+                                       services=services, feedback_url=feedback_url)
+        msg = Message(subject, recipients=[email], html=html_content)
+        mail.send(msg)
+
+    booking_agent = Agent(
+        name="Marquise's Elite Booking Specialist",
+        instructions="""
+        You are an elite booking specialist for Marquise's Services, providing world-class customer service comparable to Fortune 500 companies. Your goal is to assist customers in booking appointments for moving, cleaning, or handyman services with utmost professionalism and attention to detail.
+
+        Follow these steps:
+        1. Greet the customer warmly and ask how you can assist them today.
+        2. If they're interested in booking, ask which service they need (moving, cleaning, or handyman).
+        3. Ask for their preferred date.
+        4. Ask for their preferred time.
+        5. Collect their email address for booking confirmation and follow-up communications.
+        6. Summarize the booking details and confirm if everything is correct.
+        7. Use the book_service function to finalize the booking.
+        8. After booking, inform the customer about the confirmation email they'll receive.
+        9. Ask if there's anything else you can assist them with, such as special requests or additional information about the service.
+
+        Throughout the conversation:
+        - Maintain a polite, professional, and friendly demeanor.
+        - Use the customer's name if provided.
+        - Offer personalized suggestions based on the service they're booking.
+        - Address any concerns or questions promptly and thoroughly.
+        - Highlight the unique benefits of choosing Marquise's Services.
+        - If appropriate, mention any current promotions or loyalty programs.
+
+        Remember the entire conversation history and use it to provide context-aware, personalized responses. Your goal is to make each customer feel valued and excited about their upcoming service.
+        """,
+        functions=[book_service, send_confirmation_email],
+        model="gpt-4o-mini"
+    )
+
+    general_chat_agent = Agent(
+        name="General Chat Agent",
+        instructions="""
+        You are a friendly and knowledgeable customer service agent for Marquise's Services.
+        Your role is to answer general questions about our services, pricing, and policies.
+        If a customer expresses interest in booking a service, politely transfer them to the Booking Agent.
+        Always maintain a helpful and professional demeanor.
+        Remember the entire conversation history and use it to provide context-aware responses.
+        """,
+        functions=[],
+        model="gpt-4o-mini"
+    )
+
+    swarm_client = Swarm()
+
+    def process_streaming_response(response):
+        content = ""
+        for chunk in response:
+            if isinstance(chunk, dict):
+                if "content" in chunk and chunk["content"] is not None:
+                    content += chunk["content"]
+                    yield json.dumps({"response": chunk["content"]}) + "\n"
+                
+                if "function_call" in chunk and chunk["function_call"] is not None:
+                    function_call = chunk["function_call"]
+                    if isinstance(function_call, dict) and "name" in function_call:
+                        name = function_call["name"]
+                        arguments = json.loads(function_call.get("arguments", "{}"))
+                        try:
+                            if name == "book_service":
+                                result = book_service(**arguments)
+                            elif name == "send_confirmation_email":
+                                result = send_confirmation_email(**arguments)
+                            else:
+                                result = f"Unknown function: {name}"
+                            yield json.dumps({"response": f"Function called: {name}\n{result}\n"}) + "\n"
+                        except Exception as e:
+                            error_message = f"An error occurred, but your booking is confirmed. You'll receive a confirmation email shortly."
+                            print(f"Error in {name}: {str(e)}")  # Log the error
+                            yield json.dumps({"response": error_message}) + "\n"
     
-    # HTML email template
-    html_content = render_template_string('''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Booking Confirmation</title>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4; }
-            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
-            .header { background-color: #4A90E2; color: white; padding: 20px; text-align: center; }
-            .content { padding: 20px; }
-            .footer { background-color: #333; color: #fff; padding: 20px; text-align: center; font-size: 12px; }
-            h1 { margin: 0; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; }
-            .btn { display: inline-block; padding: 10px 20px; background-color: #4A90E2; color: white; text-decoration: none; border-radius: 5px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>Booking Confirmation</h1>
-            </div>
-            <div class="content">
-                <p>Dear Valued Customer,</p>
-                <p>Thank you for choosing Marquise's Services. We're pleased to confirm your booking with the following details:</p>
-                <table>
-                    <tr>
-                        <th>Service(s)</th>
-                        <td>{{ ', '.join(services) }}</td>
-                    </tr>
-                    <tr>
-                        <th>Date</th>
-                        <td>{{ date }}</td>
-                    </tr>
-                    <tr>
-                        <th>Time</th>
-                        <td>{{ time }}</td>
-                    </tr>
-                </table>
-                <p>Our team is committed to providing you with exceptional service. Here's what you can expect:</p>
-                <ul>
-                    <li>A courtesy call 24 hours before your appointment</li>
-                    <li>Punctual arrival of our professional team</li>
-                    <li>High-quality service tailored to your needs</li>
-                </ul>
-                <p>If you need to make any changes to your booking or have any questions, please don't hesitate to contact us:</p>
-                <p>
-                    Phone: (555) 123-4567<br>
-                    Email: support@marquisesservices.com
-                </p>
-            </div>
-            <div class="footer">
-                <p>&copy; 2023 Marquise's Services. All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    ''', services=services, date=date, time=time)
-    
-    msg = Message(subject, recipients=[email], html=html_content)
-    mail.send(msg)
+        if content:
+            yield json.dumps({"response": content}) + "\n"
+
+    @app.route('/chat', methods=['GET', 'POST'])
+    def chat():
+        if request.method == 'POST':
+            user_message = request.json['message']
+            chat_history = request.json.get('history', [])
+            
+            # Determine which agent to use based on the conversation context
+            if any("book" in message['content'].lower() for message in chat_history):
+                current_agent = booking_agent
+            else:
+                current_agent = general_chat_agent
+            
+            # Add the new user message to the chat history
+            chat_history.append({"role": "user", "content": user_message})
+            
+            try:
+                response = swarm_client.run(
+                    agent=current_agent,
+                    messages=chat_history,
+                    stream=True
+                )
+                
+                return app.response_class(process_streaming_response(response), content_type='application/json')
+            except Exception as e:
+                app.logger.error(f"Error in chat processing: {str(e)}")
+                return jsonify({"error": "An error occurred while processing your request."}), 500
+        
+        return render_template('chat.html')
+
+    @app.route('/feedback', methods=['GET', 'POST'])
+    def feedback():
+        if request.method == 'POST':
+            data = request.form
+            new_feedback = Feedback(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                service_id=data.get('service_id'),
+                rating=data.get('rating'),
+                comment=data.get('comment')
+            )
+            db.session.add(new_feedback)
+            db.session.commit()
+            flash('Thank you for your feedback!', 'success')
+            return redirect(url_for('index'))
+        
+        return render_template('feedback.html')
+
+    return app
 
 def create_sample_services():
     if Service.query.count() == 0:
@@ -294,6 +476,8 @@ def create_sample_services():
 
 app = create_app()
 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///new_bookings.db')
+
 @app.context_processor
 def inject_user():
     return dict(current_user=current_user)
@@ -302,4 +486,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         create_sample_services()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

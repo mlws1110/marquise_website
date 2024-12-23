@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Reminder - Marquise's Services</title>
+</head>
+<body>
+    <header>
+        <img src="https://your-logo-url.com" alt="Marquise's Services Logo">
+    </header>
+    <main>
+        <h1>Your Appointment is Tomorrow!</h1>
+        <p>Dear Valued Customer,</p>
+        <p>This is a friendly reminder that you have an appointment with Marquise's Services tomorrow:</p>
+        <ul>
+            {% for service in services %}
+            <li>{{ service }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Date:</strong> {{ date }}</p>
+        <p><strong>Time:</strong> {{ time }}</p>
+        <p>If you need to make any changes or have any questions, please don't hesitate to contact us at support@marquisesservices.com or call us at (555) 123-4567.</p>
+        <p>We look forward to serving you!</p>
+    </main>
+    <footer>
+        <p>© 2024 Marquise's Services. All rights reserved.</p>
+        <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a></p>
+    </footer>
+</body>
+</html>

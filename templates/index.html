@@ -112,6 +112,15 @@
         <a href="{{ url_for('booking') }}" class="btn btn-light btn-lg">Book Your Service Now</a>
     </div>
 </section>
+
+<!-- Add this section just before the closing </section> tag of the cta section -->
+<section id="ai-chatbot-highlight" class="bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Need Immediate Assistance?</h2>
+        <p class="lead mb-4">Chat with our AI assistant for quick answers about our services!</p>
+        <a href="{{ url_for('chat') }}" class="btn btn-primary btn-lg">Chat Now</a>
+    </div>
+</section>
 {% endblock %}
 
 {% block scripts %}

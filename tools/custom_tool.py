@@ -1,5 +1,5 @@
 from functools import wraps
-from extensions import db
+from extensions import db, mail
 from models import Availability, Service, Booking
 from flask_mail import Message
 from datetime import datetime
@@ -8,7 +8,8 @@ from flask import render_template, current_app
 def tool(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
+        result = func(*args, **kwargs)
+        return {"result": result}
     return wrapper
 
 @tool
@@ -34,25 +35,35 @@ def calculate_estimate(service_name: str, hours: int) -> str:
     return f"The estimated cost for {hours} hours of {service.name} is ${cost}."
 
 @tool
-def send_confirmation_email(name: str, email: str, service: str, date: str, time: str) -> str:
+def send_confirmation_email(email: str, services: list, date: str, time: str) -> str:
     subject = "Booking Confirmation - Marquise's Services"
     
-    # Render the email template
-    email_body = render_template('email_templates/booking_confirmation.html', 
-                                 name=name, 
-                                 service=service, 
-                                 date=date, 
-                                 time=time)
+    # HTML email template
+    html_content = render_template('email_templates/booking_confirmation.html', 
+                                   services=services, date=date, time=time)
     
-    sender = current_app.config['MAIL_DEFAULT_SENDER']
-    msg = Message(subject, 
-                  sender=sender,
-                  recipients=[email])
-    msg.html = email_body
+    msg = Message(subject, recipients=[email], html=html_content)
+    mail.send(msg)
     
-    try:
-        current_app.extensions['mail'].send(msg)
-        return f"Confirmation email sent to {email}."
-    except Exception as e:
-        current_app.logger.error(f"Failed to send email: {str(e)}")
-        return f"Failed to send confirmation email to {email}. Please contact support."
+    return f"Confirmation email sent to {email} for services on {date} at {time}."
+
+send_confirmation_email.schema = {
+    "type": "function",
+    "function": {
+        "name": "send_confirmation_email",
+        "description": "Send a confirmation email for a booking",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "email": {"type": "string"},
+                "services": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "date": {"type": "string"},
+                "time": {"type": "string"}
+            },
+            "required": ["email", "services", "date", "time"]
+        }
+    }
+}

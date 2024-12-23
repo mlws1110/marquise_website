@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Provide Feedback - Marquise's Services{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">We Value Your Feedback</h2>
+    <form method="POST" action="{{ url_for('feedback') }}">
+        <div class="mb-3">
+            <label for="service" class="form-label">Service</label>
+            <select class="form-select" id="service" name="service_id" required>
+                <option value="" selected disabled>Choose a service</option>
+                {% for service in services %}
+                    <option value="{{ service.id }}">{{ service.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="rating" class="form-label">Rating</label>
+            <select class="form-select" id="rating" name="rating" required>
+                <option value="5">Excellent</option>
+                <option value="4">Very Good</option>
+                <option value="3">Good</option>
+                <option value="2">Fair</option>
+                <option value="1">Poor</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="comment" class="form-label">Comments</label>
+            <textarea class="form-control" id="comment" name="comment" rows="4"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+    </form>
+</div>
+{% endblock %}

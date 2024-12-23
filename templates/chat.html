@@ -7,26 +7,117 @@
 {% block content %}
 <div id="chat-container" class="my-5">
     <div id="chat-box" class="border rounded p-3 bg-light">
-        <div id="messages" class="overflow-auto" style="height: 400px; margin-bottom: 20px;"></div>
-        <input type="text" id="user-input" class="form-control" placeholder="Type your question here..." />
+        <div id="messages" class="overflow-auto" style="height: 400px; margin-bottom: 20px;">
+            <div class="message bot-message text-left text-success mb-2">
+                Hello! I'm Marquise's Services AI assistant. How can I help you today?
+            </div>
+        </div>
+        <input type="text" id="user-input" class="form-control" placeholder="Type your message here..." />
         <button class="btn btn-primary mt-3" onclick="sendMessage()">Send</button>
     </div>
 </div>
 
 <script>
+    let chatHistory = [];
+
     async function sendMessage() {
         const userInput = document.getElementById('user-input').value;
-        const response = await fetch('/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userInput })
-        });
-        const data = await response.json();
+        if (!userInput.trim()) return;
+
         const messages = document.getElementById('messages');
         messages.innerHTML += `<div class="message user-message text-right text-primary mb-2">${userInput}</div>`;
-        messages.innerHTML += `<div class="message bot-message text-left text-success mb-2">${data.response}</div>`;
         document.getElementById('user-input').value = '';
         messages.scrollTop = messages.scrollHeight;
+
+        // Add user message to chat history
+        chatHistory.push({"role": "user", "content": userInput});
+
+        // Show typing indicator
+        const typingIndicator = document.createElement('div');
+        typingIndicator.id = 'typing-indicator';
+        typingIndicator.className = 'message bot-message text-left text-muted mb-2';
+        typingIndicator.textContent = 'AI is typing...';
+        messages.appendChild(typingIndicator);
+        messages.scrollTop = messages.scrollHeight;
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userInput, history: chatHistory })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let botResponse = '';
+            let partialChunk = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value, { stream: true });
+                const fullChunk = partialChunk + chunk;
+                const jsonStrings = fullChunk.split('\n');
+                partialChunk = jsonStrings.pop(); // Store the last (potentially incomplete) chunk
+
+                for (const jsonString of jsonStrings) {
+                    if (jsonString.trim()) {
+                        try {
+                            const data = JSON.parse(jsonString);
+                            
+                            if (data.response) {
+                                botResponse += data.response;
+                                typingIndicator.innerHTML = botResponse;
+                                messages.scrollTop = messages.scrollHeight;
+                            }
+                        } catch (error) {
+                            console.error("Error parsing JSON:", error);
+                            console.log("Problematic chunk:", jsonString);
+                        }
+                    }
+                }
+            }
+
+            // Process any remaining partial chunk
+            if (partialChunk.trim()) {
+                try {
+                    const data = JSON.parse(partialChunk);
+                    if (data.response) {
+                        botResponse += data.response;
+                    }
+                } catch (error) {
+                    console.error("Error parsing JSON:", error);
+                    console.log("Problematic chunk:", partialChunk);
+                }
+            }
+
+            // Remove typing indicator and add final bot message
+            typingIndicator.remove();
+            if (botResponse.trim()) {
+                messages.innerHTML += `<div class="message bot-message text-left text-success mb-2">${botResponse}</div>`;
+                // Add bot message to chat history
+                chatHistory.push({"role": "assistant", "content": botResponse});
+            } else {
+                throw new Error('Empty response from server');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            messages.innerHTML += `<div class="message bot-message text-left text-danger mb-2">Sorry, there was an error processing your request. Please try again later.</div>`;
+        }
+        messages.scrollTop = messages.scrollHeight;
     }
+
+    // Add event listener for Enter key
+    document.getElementById('user-input').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
 </script>
 {% endblock %}

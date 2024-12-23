@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Marquise's Services</title>
+    <style>
+        /* Add your custom styles here */
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://your-logo-url.com" alt="Marquise's Services Logo">
+    </header>
+    <main>
+        <h1>Thank you for choosing Marquise's Services!</h1>
+        <p>Dear Valued Customer,</p>
+        <p>We're thrilled to confirm your booking for the following service(s):</p>
+        <ul>
+            {% for service in services %}
+            <li>{{ service }}</li>
+            {% endfor %}
+        </ul>
+        <p><strong>Date:</strong> {{ date }}</p>
+        <p><strong>Time:</strong> {{ time }}</p>
+        <p>Our team is excited to provide you with exceptional service. Here's what you can expect:</p>
+        <ul>
+            <li>A courtesy call 24 hours before your appointment</li>
+            <li>Our professional team arriving promptly at the scheduled time</li>
+            <li>High-quality service tailored to your specific needs</li>
+        </ul>
+        <p>If you need to make any changes or have any questions, please don't hesitate to contact us at support@marquisesservices.com or call us at (555) 123-4567.</p>
+        <p>We look forward to serving you!</p>
+    </main>
+    <footer>
+        <p>© 2024 Marquise's Services. All rights reserved.</p>
+        <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a></p>
+    </footer>
+</body>
+</html>

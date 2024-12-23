@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Value Your Feedback - Marquise's Services</title>
+</head>
+<body>
+    <header>
+        <img src="https://your-logo-url.com" alt="Marquise's Services Logo">
+    </header>
+    <main>
+        <h1>How Was Your Experience?</h1>
+        <p>Dear Valued Customer,</p>
+        <p>We hope you were satisfied with the service(s) we provided:</p>
+        <ul>
+            {% for service in services %}
+            <li>{{ service }}</li>
+            {% endfor %}
+        </ul>
+        <p>Your feedback is incredibly important to us as we strive to continually improve our services. Would you mind taking a moment to rate your experience and provide any comments?</p>
+        <a href="{{ feedback_url }}" style="background-color: #4CAF50; color: white; padding: 14px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer;">Rate Your Experience</a>
+        <p>Thank you for choosing Marquise's Services. We appreciate your business and look forward to serving you again in the future.</p>
+    </main>
+    <footer>
+        <p>© 2024 Marquise's Services. All rights reserved.</p>
+        <p><a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a></p>
+    </footer>
+</body>
+</html>
